@@ -21,6 +21,14 @@ public class Vec3 {
         return x * o.x + y * o.y + z * o.z;
     }
 
+    public Vec3 cross(Vec3 o) {
+        double a = y * o.z - z * o.y;
+        double b = - (x * o.z - z * o.x);
+        double c = x * o.y - y * o.x;
+
+        return new Vec3(a, b, c);
+    }
+
     public Vec3 normalize() {
         double len = Math.sqrt(dot(this));
         return new Vec3(x / len, y / len, z / len);
