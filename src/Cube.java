@@ -1,6 +1,11 @@
 public class Cube {
+    public final Vec3[] corners;
+    public final int[][] pairs = {
+            {0,1}, {1,2}, {2,3}, {3,0},   // bottom
+            {4,5}, {5,6}, {6,7}, {7,4},   // top
+            {0,4}, {1,5}, {2,6}, {3,7}    // verticals
+    };
     private Vec3 pos;
-    private Vec3[] corners;
 
     public Cube(double size, Vec3 pos) {
         if (size == 0.0) {
@@ -23,7 +28,7 @@ public class Cube {
     }
 
     public Vec3 getWorldPos() {
-        return corners[0];
+        return pos;
     }
 
     public void update() {
