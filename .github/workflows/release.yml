@@ -1,0 +1,151 @@
+# Builds single-file executables for Windows and Linux (Java runtime bundled, no Java install needed).
+# - Push a tag like v1.0  -> builds both and publishes them on a GitHub Release.
+# - Run manually (Actions tab > Release > Run workflow) -> builds both as downloadable workflow artifacts.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            asset: 3DCube-windows.exe
+          - os: ubuntu-latest
+            asset: 3DCube-linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Compile jar
+        shell: bash
+        run: |
+          mkdir -p build/classes build/in
+          javac -d build/classes src/*.java
+          jar --create --file build/in/3DCube.jar --main-class Main -C build/classes .
+
+      - name: Create app image
+        shell: bash
+        run: |
+          jpackage --type app-image --name 3DCube --input build/in --main-jar 3DCube.jar \
+                   --main-class Main --add-modules java.desktop --dest build/image
+
+      # Windows: wrap the app image in a self-extracting exe using IExpress (built into Windows).
+      # On launch it unpacks once to %LOCALAPPDATA%\3DCube\<commit> and starts the app.
+      - name: Package single exe (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $work = "$pwd\build"
+          $out  = "$work\${{ matrix.asset }}"
+          $id   = "${{ github.sha }}".Substring(0, 12)
+          New-Item -ItemType Directory -Force "$work\pkg" | Out-Null
+          tar -cf "$work\pkg\app.tar" -C "$work\image" 3DCube
+          @"
+          @echo off
+          set "DEST=%LOCALAPPDATA%\3DCube\$id"
+          if not exist "%DEST%\3DCube\3DCube.exe" (
+            mkdir "%DEST%" 2>nul
+            "%SystemRoot%\System32\tar.exe" -xf "%~dp0app.tar" -C "%DEST%"
+          )
+          start "" "%DEST%\3DCube\3DCube.exe"
+          "@ | Set-Content "$work\pkg\launch.cmd" -Encoding ascii
+          @"
+          [Version]
+          Class=IEXPRESS
+          SEDVersion=3
+          [Options]
+          PackagePurpose=InstallApp
+          ShowInstallProgramWindow=1
+          HideExtractAnimation=1
+          UseLongFileName=1
+          InsideCompressed=0
+          CAB_FixedSize=0
+          CAB_ResvCodeSigning=0
+          RebootMode=N
+          InstallPrompt=%InstallPrompt%
+          DisplayLicense=%DisplayLicense%
+          FinishMessage=%FinishMessage%
+          TargetName=%TargetName%
+          FriendlyName=%FriendlyName%
+          AppLaunched=%AppLaunched%
+          PostInstallCmd=%PostInstallCmd%
+          AdminQuietInstCmd=%AdminQuietInstCmd%
+          UserQuietInstCmd=%UserQuietInstCmd%
+          SourceFiles=SourceFiles
+          [Strings]
+          InstallPrompt=
+          DisplayLicense=
+          FinishMessage=
+          TargetName=$out
+          FriendlyName=3DCube
+          AppLaunched=cmd /c launch.cmd
+          PostInstallCmd=<None>
+          AdminQuietInstCmd=
+          UserQuietInstCmd=
+          FILE0="launch.cmd"
+          FILE1="app.tar"
+          [SourceFiles]
+          SourceFiles0=$work\pkg\
+          [SourceFiles0]
+          %FILE0%=
+          %FILE1%=
+          "@ | Set-Content "$work\3DCube.sed" -Encoding ascii
+          & "$env:SystemRoot\System32\iexpress.exe" /N /Q "$work\3DCube.sed" | Out-Null
+          if (-not (Test-Path $out)) { throw 'IExpress failed to produce the exe' }
+
+      # Linux: self-extracting shell executable (script header + tar.gz payload).
+      # On launch it unpacks once to ~/.cache/3DCube/<commit> and starts the app.
+      - name: Package single executable (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          id=$(echo "${{ github.sha }}" | cut -c1-12)
+          out="build/${{ matrix.asset }}"
+          cat > "$out" <<EOF
+          #!/bin/sh
+          set -e
+          DEST="\${XDG_CACHE_HOME:-\$HOME/.cache}/3DCube/$id"
+          if [ ! -x "\$DEST/3DCube/bin/3DCube" ]; then
+            mkdir -p "\$DEST"
+            line=\$(awk '/^__ARCHIVE__\$/ { print NR + 1; exit }' "\$0")
+            tail -n +"\$line" "\$0" | tar -xz -C "\$DEST"
+          fi
+          exec "\$DEST/3DCube/bin/3DCube" "\$@"
+          __ARCHIVE__
+          EOF
+          tar -czf - -C build/image 3DCube >> "$out"
+          chmod +x "$out"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: build/${{ matrix.asset }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x assets/3DCube-linux
+          gh release create "$GITHUB_REF_NAME" assets/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
