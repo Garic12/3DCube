@@ -1,16 +1,28 @@
-# 3DCube
+<div align="center">
 
-A small project for learning Java: a tool that renders a rasterized 3D cube to the screen.
+# 3D Wireframe Cube Renderer
 
-It uses plain Java and Swing.
-The vector and matrix math is written from scratch.
+<img src="docs/animation.gif" width="400" height="400" alt="Rotating wireframe cube animation"/>
 
-## Files
-- `src/Main.java`: entry point, opens the window
-- `src/GamePanel.java`: the drawing surface and render loop
-- `src/Cube.java`: cube geometry
-- `src/Vec3.java`, `src/Matrix4.java`: 3D vector and 4x4 matrix math
+*A small learning project in Java: a wireframe cube renderer with a movable camera.*
 
-## Running
+![Java](https://img.shields.io/badge/Java-ED8B00?style=flat&logo=openjdk&logoColor=white)
 
-Open the project in IntelliJ IDEA (JDK 27) and run `Main`.
+</div>
+
+---
+
+### Features
+
+- **World-to-screen projection**: converts 3D world-space coordinates to 2D screen-space
+- **Custom vector math**: hand-rolled `Vector` class and vector operations, no external libraries
+- **Custom wireframe rendering**: own drawing routines for edges and vertices
+
+## Controls
+
+| Key | Action |
+|:---:|--------|
+| <kbd>W</kbd> | Move camera up |
+| <kbd>S</kbd> | Move camera down |
+| <kbd>A</kbd> | Rotate camera around the Z-axis (left) |
+| <kbd>D</kbd> | Rotate camera around the Z-axis (right) |
