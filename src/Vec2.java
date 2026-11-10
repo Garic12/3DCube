@@ -7,21 +7,8 @@ public class Vec2 {
         this.y = y;
     }
 
-    public Vec2 sub(Vec2 o) {
-        return new Vec2(x - o.x, y - o.y);
-    }
-
     public Vec2 add(Vec2 o) {
         return new Vec2(x + o.x, y + o.y);
-    }
-
-    public double dot(Vec2 o) {
-        return x * o.x + y * o.y;
-    }
-
-    public Vec2 normalize() {
-        double len = Math.sqrt(dot(this));
-        return new Vec2(x / len, y / len);
     }
 
     @Override

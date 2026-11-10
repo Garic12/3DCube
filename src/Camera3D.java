@@ -8,6 +8,15 @@ public class Camera3D {
         this.target = target;
     }
 
+    public void ChangePosition(Vec3 o) {
+        pos = pos.add(o);
+        target = target.add(o);
+    }
+
+    public void ChangeAngle(double deg) {
+        pos = pos.rotateY(deg);
+    }
+
     public Matrix4 getViewMatrix() {
         return Matrix4.lookAt(pos, target, up);
     }

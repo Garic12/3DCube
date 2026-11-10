@@ -15,15 +15,15 @@ public class Cube {
         this.pos = pos;
         // Order is first bottom then top, anticlockwise
         corners = new Vec3[] {
-                new Vec3(0, 0, 0),
-                new Vec3(1, 0, 0),
-                new Vec3(1, 1, 0),
-                new Vec3(0, 1, 0),
+                new Vec3(0, 0, 0).scalarMult(size),
+                new Vec3(1, 0, 0).scalarMult(size),
+                new Vec3(1, 1, 0).scalarMult(size),
+                new Vec3(0, 1, 0).scalarMult(size),
 
-                new Vec3(0, 0, 1),
-                new Vec3(1, 0, 1),
-                new Vec3(1, 1, 1),
-                new Vec3(0, 1, 1)
+                new Vec3(0, 0, 1).scalarMult(size),
+                new Vec3(1, 0, 1).scalarMult(size),
+                new Vec3(1, 1, 1).scalarMult(size),
+                new Vec3(0, 1, 1).scalarMult(size)
         };
     }
 

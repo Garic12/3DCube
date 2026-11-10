@@ -21,6 +21,10 @@ public class Vec3 {
         return x * o.x + y * o.y + z * o.z;
     }
 
+    public Vec3 scalarMult(double s) {
+        return new Vec3(x * s, y * s, z * s);
+    }
+
     public Vec3 cross(Vec3 o) {
         double a = y * o.z - z * o.y;
         double b = - (x * o.z - z * o.x);
@@ -32,6 +36,13 @@ public class Vec3 {
     public Vec3 normalize() {
         double len = Math.sqrt(dot(this));
         return new Vec3(x / len, y / len, z / len);
+    }
+
+    public Vec3 rotateY(double deg) {
+        double new_x = Math.cos(deg) * x + -Math.sin(deg) * y;
+        double new_y = Math.sin(deg) * x + Math.cos(deg) * y;
+
+        return new Vec3(new_x, new_y, z);
     }
 
     @Override

@@ -15,19 +15,6 @@ public class Matrix4 {
         return v;
     }
 
-    public Matrix4 multiply(Matrix4 o) {
-        Matrix4 result = new Matrix4();
-
-        for (int x = 0; x < 4; x++) {
-            for (int y = 0; y < 4; y++) {
-                for (int k = 0; k < 4; k++) {
-                    result.m[x][y] += this.m[x][k] * o.m[k][y];
-                }
-            }
-        }
-        return result;
-    }
-
     public Vec3 transform(Vec3 p) {
         double[] in = {p.x, p.y, p.z, 1};
 
